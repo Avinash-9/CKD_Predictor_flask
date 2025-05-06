@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chronic Kidney Disease Prediction System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Floating particles background -->
+        <div class="particles">
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+        </div>
+
+        <header class="app-header animate__animated animate__fadeIn">
+            <div class="header-content">
+                <div class="icon-circle animate__animated animate__pulse animate__infinite">
+                    <i class="fas fa-heartbeat header-icon"></i>
+                </div>
+                <div class="header-text">
+                    <h1>Chronic Kidney Disease Prediction System</h1>
+                    <p class="header-subtitle">AI-powered early detection with missing value support</p>
+                </div>
+            </div>
+        </header>
+
+        <main class="content-wrapper">
+            <!-- Patient Data Entry Section -->
+            <section class="card patient-form-section animate__animated animate__fadeInUp">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-user-md icon"></i>
+                    </div>
+                    <h2>Patient Assessment</h2>
+                    <div class="section-decoration"></div>
+                </div>
+                
+                <form method="POST" class="patient-form">
+                    <div class="form-notice">
+                        <i class="fas fa-info-circle"></i>
+                        <p>Fill available data. Our system can predict with partial information.</p>
+                    </div>
+                    
+                    <div class="form-grid">
+                        {% for feature in features %}
+                        <div class="form-group">
+                            <label for="{{ feature }}">
+                                <i class="fas fa-tag"></i> {{ feature|replace('_', ' ')|title }}
+                            </label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-vial"></i>
+                                <input type="text" 
+                                       name="{{ feature }}" 
+                                       id="{{ feature }}"
+                                       placeholder="Enter {{ feature|replace('_', ' ') }} (optional)"
+                                       aria-label="{{ feature|replace('_', ' ') }}">
+                            </div>
+                            <small class="input-hint">Optional - leave blank if unknown</small>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" name="predict_single" class="btn btn-primary btn-animate">
+                            <i class="fas fa-search"></i> Analyze with Available Data
+                            <span class="btn-wave"></span>
+                        </button>
+                        <button type="reset" class="btn btn-secondary">
+                            <i class="fas fa-undo"></i> Clear Form
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- Results Section -->
+            {% if prediction is not none %}
+            <section class="card results-section animate__animated animate__fadeIn">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-chart-bar icon"></i>
+                    </div>
+                    <h2>Diagnostic Results</h2>
+                    <div class="section-decoration"></div>
+                </div>
+                
+                <div class="results-content">
+                    <div class="result-indicator {% if prediction == 1 %}high-risk{% else %}low-risk{% endif %} animate__animated animate__zoomIn">
+                        <div class="indicator-icon">
+                            {% if prediction == 1 %}
+                                <i class="fas fa-exclamation-triangle pulse"></i>
+                            {% else %}
+                                <i class="fas fa-check-circle pulse"></i>
+                            {% endif %}
+                        </div>
+                        <div class="indicator-text">
+                            <h3>
+                                {% if prediction == 1 %}
+                                    High Risk of Chronic Kidney Disease
+                                {% else %}
+                                    Low Risk of Chronic Kidney Disease
+                                {% endif %}
+                            </h3>
+                            <div class="confidence-meter">
+                                <div class="meter-bar" style="width: {{ (probability * 100)|round(2) }}%"></div>
+                                <span>Confidence: {{ (probability * 100)|round(2) }}%</span>
+                            </div>
+                            {% if missing_values %}
+                            <p class="missing-notice">
+                                <i class="fas fa-exclamation-circle"></i>
+                                Prediction made with {{ missing_values }} missing values
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <button class="toggle-details" onclick="toggleResultDetails()">
+                        <i class="fas fa-chevron-down"></i> 
+                        <span class="toggle-text">View Interpretation</span>
+                        <span class="toggle-arrow"></span>
+                    </button>
+                    <div id="resultDetails" class="result-details-container">
+                        <div class="result-details">
+                            <h4><i class="fas fa-comment-medical"></i> Interpretation:</h4>
+                            <p>
+                                {% if prediction == 1 %}
+                                    The patient shows markers consistent with chronic kidney disease 
+                                    based on available data. Consider further diagnostic testing.
+                                {% else %}
+                                    No significant markers of chronic kidney disease detected 
+                                    with current information. Maintain routine monitoring.
+                                {% endif %}
+                            </p>
+                            {% if missing_values %}
+                            <div class="missing-suggestion">
+                                <h4><i class="fas fa-flask"></i> Recommended Additional Tests:</h4>
+                                <ul>
+                                    <li><i class="fas fa-check-circle"></i> Complete blood count (CBC)</li>
+                                    <li><i class="fas fa-check-circle"></i> Serum creatinine test</li>
+                                    <li><i class="fas fa-check-circle"></i> Urinalysis</li>
+                                    <li><i class="fas fa-check-circle"></i> Glomerular filtration rate (GFR)</li>
+                                </ul>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </section>
+            {% endif %}
+
+            <!-- Batch Processing Section -->
+            <section class="card batch-section animate__animated animate__fadeInUp">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-users icon"></i>
+                    </div>
+                    <h2>Batch Processing</h2>
+                    <div class="section-decoration"></div>
+                </div>
+                
+                <form action="/predict_csv" method="POST" enctype="multipart/form-data" class="batch-form">
+                    <div class="form-notice">
+                        <i class="fas fa-info-circle"></i>
+                        <p>CSV files can have missing values - our system will handle them automatically.</p>
+                    </div>
+                    
+                    <div class="file-upload-container">
+                        <div class="file-upload-wrapper">
+                            <label for="csv-upload" class="upload-label">
+                                <div class="upload-icon">
+                                    <i class="fas fa-file-csv"></i>
+                                </div>
+                                <div class="upload-text">
+                                    <span class="upload-title">Choose CSV File</span>
+                                    <span class="upload-subtitle">or drag and drop here</span>
+                                </div>
+                                <input type="file" 
+                                       id="csv-upload" 
+                                       name="csv_file" 
+                                       accept=".csv" 
+                                       aria-label="Upload CSV file" 
+                                       onchange="displayFileName(this)">
+                            </label>
+                            <div id="fileDisplay" class="file-display">
+                                <i class="fas fa-file-alt"></i>
+                                <span class="file-name">No file selected</span>
+                            </div>
+                        </div>
+                        <small class="file-hint">Supports partial data - minimum 5 parameters required</small>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary btn-animate">
+                            <i class="fas fa-file-import"></i> Process Batch
+                            <span class="btn-wave"></span>
+                        </button>
+                    </div>
+                </form>
+            </section>
+        </main>
+
+        <footer class="app-footer animate__animated animate__fadeIn">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <i class="fas fa-heartbeat"></i>
+                    <span>CKD Prediction System</span>
+                </div>
+                <div class="footer-links">
+                    <a href="#"><i class="fas fa-info-circle"></i> About</a>
+                    <a href="#"><i class="fas fa-book"></i> Documentation</a>
+                    <a href="#"><i class="fas fa-shield-alt"></i> Privacy</a>
+                </div>
+            </div>
+            <p class="disclaimer">
+                <i class="fas fa-info-circle"></i> 
+                Predictions with missing values may have reduced accuracy. Always confirm with complete tests when possible.
+            </p>
+            <div class="footer-copyright">
+                <p>© 2025 CKD Prediction System with Missing Value Support</p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- JS Scripts -->
+    <script>
+        function toggleResultDetails() {
+            const section = document.getElementById("resultDetails");
+            const toggleBtn = document.querySelector('.toggle-details');
+            const toggleText = document.querySelector('.toggle-text');
+            
+            if (section.style.maxHeight) {
+                section.style.maxHeight = null;
+                toggleBtn.classList.remove('active');
+                toggleText.textContent = 'View Interpretation';
+            } else {
+                section.style.maxHeight = section.scrollHeight + "px";
+                toggleBtn.classList.add('active');
+                toggleText.textContent = 'Hide Interpretation';
+            }
+        }
+
+        function displayFileName(input) {
+            const fileDisplay = document.getElementById("fileDisplay");
+            const fileName = input.files.length > 0 ? input.files[0].name : 'No file selected';
+            
+            fileDisplay.querySelector('.file-name').textContent = fileName;
+            fileDisplay.classList.toggle('has-file', input.files.length > 0);
+        }
+
+        // Add drag and drop functionality
+        const uploadInput = document.getElementById('csv-upload');
+        const uploadLabel = document.querySelector('.upload-label');
+        
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            uploadLabel.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            uploadLabel.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            uploadLabel.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight() {
+            uploadLabel.classList.add('highlight');
+        }
+
+        function unhighlight() {
+            uploadLabel.classList.remove('highlight');
+        }
+
+        uploadLabel.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            uploadInput.files = files;
+            displayFileName(uploadInput);
+        }
+
+        // Initialize the details section
+        document.addEventListener('DOMContentLoaded', function() {
+            const detailsSection = document.getElementById('resultDetails');
+            if (detailsSection) {
+                detailsSection.style.maxHeight = '0';
+            }
+        });
+    </script>
+</body>
+</html>
